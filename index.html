@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>เกมสลับอักษร - Local Style</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Sarabun', sans-serif;
+      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+      overflow-x: hidden;
+      animation: floatBackground 20s ease-in-out infinite;
+    }
+
+    @keyframes floatBackground {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    header {
+      background-color: #ee6c4d;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 50px auto;
+      background: #fff;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      transition: transform 0.3s ease;
+    }
+
+    .container:hover {
+      transform: translateY(-4px);
+    }
+
+    .title {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .hint {
+      color: #666;
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+
+    .scrambled {
+      font-size: 28px;
+      font-weight: bold;
+      color: #ee6c4d;
+      margin-bottom: 20px;
+      letter-spacing: 2px;
+    }
+
+    .letters {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .letters button {
+      font-size: 22px;
+      padding: 12px 18px;
+      background-color: #ffd9c1;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      color: #333;
+      transition: transform 0.2s ease, background-color 0.3s ease;
+    }
+
+    .letters button:hover {
+      background-color: #ffbc9b;
+      transform: scale(1.05);
+    }
+
+    .letters button:disabled {
+      background-color: #f5f5f5;
+      color: #999;
+      cursor: not-allowed;
+    }
+
+    .answer {
+      font-size: 24px;
+      margin: 20px 0;
+      color: #222;
+      min-height: 30px;
+    }
+
+    .actions {
+      margin-top: 20px;
+    }
+
+    .actions button {
+      background-color: #ee6c4d;
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 10px;
+      margin: 10px;
+      cursor: pointer;
+      font-size: 18px;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .actions button:hover {
+      background-color: #d95e42;
+      transform: translateY(-2px);
+    }
+
+    .score {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #444;
+    }
+
+    .result {
+      font-size: 22px;
+      margin-top: 15px;
+      font-weight: bold;
+      color: #4caf50;
+    }
+  </style>
+</head>
+<body>
+  <audio id="bgMusic" autoplay loop volume="0.4">
+    <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_5b4bdf0a48.mp3?filename=soft-piano-ambient-110660.mp3" type="audio/mpeg">
+  </audio>
+
+  <header>
+    <h1>🧠 เกมสลับอักษร</h1>
+    <p>สนุกกับคำภาษาไทยในโทน Local Alike!</p>
+  </header>
+
+  <div class="container">
+    <div class="title">คำใบ้:</div>
+    <div class="hint" id="hintText"></div>
+
+    <div class="title">เรียงตัวอักษรให้ถูกต้อง</div>
+    <div class="scrambled" id="scrambledWord"></div>
+
+    <div class="letters" id="letterButtons"></div>
+
+    <div class="answer" id="userAnswer"></div>
+
+    <div class="actions">
+      <button onclick="checkAnswer()">✅ ตรวจคำตอบ</button>
+      <button onclick="resetGame()">🔁 เริ่มใหม่</button>
+    </div>
+
+    <div class="result" id="resultMessage"></div>
+    <div class="score">คะแนนรวม: <span id="score">0</span></div>
+  </div>
+
+  <script>
+    const words = [
+      { word: "ผัดไทย", hint: "อาหารจานเส้นชื่อดัง" },
+      { word: "กรุงเทพ", hint: "เมืองหลวงของไทย" },
+      { word: "ลอยกระทง", hint: "เทศกาลที่มีแสงเทียนลอยน้ำ" }
+    ];
+
+    let currentWord = "";
+    let currentHint = "";
+    let scrambled = "";
+    let selectedLetters = [];
+    let score = 0;
+
+    function shuffle(word) {
+      const letters = word.split('');
+      for (let i = letters.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [letters[i], letters[j]] = [letters[j], letters[i]];
+      }
+      return letters.join('');
+    }
+
+    function displayWord() {
+      const randomItem = words[Math.floor(Math.random() * words.length)];
+      currentWord = randomItem.word;
+      currentHint = randomItem.hint;
+      scrambled = shuffle(currentWord);
+      selectedLetters = [];
+
+      document.getElementById("scrambledWord").textContent = scrambled;
+      document.getElementById("hintText").textContent = currentHint;
+      document.getElementById("userAnswer").textContent = "";
+      document.getElementById("resultMessage").textContent = "";
+
+      const buttonsContainer = document.getElementById("letterButtons");
+      buttonsContainer.innerHTML = "";
+
+      for (let char of scrambled) {
+        const btn = document.createElement("button");
+        btn.textContent = char;
+        btn.onclick = () => selectLetter(char, btn);
+        buttonsContainer.appendChild(btn);
+      }
+    }
+
+    function selectLetter(letter, btn) {
+      selectedLetters.push(letter);
+      btn.disabled = true;
+      document.getElementById("userAnswer").textContent = selectedLetters.join('');
+    }
+
+    function checkAnswer() {
+      const userWord = selectedLetters.join('');
+      const resultMsg = document.getElementById("resultMessage");
+
+      if (userWord === currentWord) {
+        resultMsg.textContent = "ถูกต้อง! 🎉";
+        resultMsg.style.color = "#4caf50";
+        score += 10;
+        document.getElementById("score").textContent = score;
+        celebrate();
+      } else {
+        resultMsg.textContent = "ผิด ลองอีกครั้งนะ!";
+        resultMsg.style.color = "#e53935";
+      }
+    }
+
+    function resetGame() {
+      displayWord();
+    }
+
+    function celebrate() {
+      const confetti = document.createElement("div");
+      confetti.textContent = "🎊";
+      confetti.style.position = "fixed";
+      confetti.style.fontSize = "36px";
+      confetti.style.top = Math.random() * 80 + "%";
+      confetti.style.left = Math.random() * 100 + "%";
+      document.body.appendChild(confetti);
+      setTimeout(() => confetti.remove(), 1000);
+    }
+
+    window.onload = displayWord;
+  </script>
+</body>
+</html>
